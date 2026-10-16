@@ -4,10 +4,11 @@ A Dragon's Dogma 2 mod (REFramework Lua script) that brings back **dragonforging
 **Dark Arisen DLC spoils**.
 
 In the DLC, appraised spoils (Lv 1 to 5) and their Smithed versions can't be enhanced or dragonforged at all. With this
-mod, every time **you or your pawns slay a dragon-type enemy**, each DLC spoil you have equipped has a chance to gain a
-**dragonforge level**, up to 3, like dragonforging in Dragon's Dogma (2012).
+mod, every time **you or your pawns slay a dragon-type enemy**, each DLC spoil equipped by you or your main pawn has a
+chance to gain a **dragonforge level**, up to 3, like dragonforging in Dragon's Dogma (2012).
 
-- **What can be forged:** your own character's equipped DLC spoils: weapons, shields, helmets, body and leg armour.
+- **What can be forged:** the equipped DLC spoils of your character and your main pawn: weapons, shields, helmets,
+  body and leg armour.
   Cloaks and rings can't be upgraded in the base game either, so they're left out. Base-game gear and the DLC items
   that can already be upgraded are not changed.
 - **Three levels:** each level adds a third of the item's dragonforge bonus, and the **3rd level also halves the
@@ -27,7 +28,8 @@ mod, every time **you or your pawns slay a dragon-type enemy**, each DLC spoil y
 
   For example, Rimed Needle (940 Strength) gets +114, +228 and +342 Strength at levels 1, 2 and 3, and goes from 2.5
   to 1.25 weight at level 3.
-- **Chances, like the first game:** on every kill each equipped spoil below level 3 rolls on its own; the chance
+- **Chances, like the first game:** on every kill each equipped spoil (yours and your main pawn's) below level 3
+  rolls on its own; the chance
   depends on the dragon and on the item's current level, and one kill can forge several items:
 
   | Dragon | Level 0 to 1 | Level 1 to 2 | Level 2 to 3 |
@@ -39,7 +41,8 @@ mod, every time **you or your pawns slay a dragon-type enemy**, each DLC spoil y
   | Nex, Fallen Dragon | 100% | 100% | 100% |
 
   Variants count as their base dragon (for example the Rancorous Dragon Carcass counts as the Fallen Dragon).
-- **The game's own notice** tells you: "*Rimed Needle* has been **DRAGONFORGED**! (2/3)" with the item's icon.
+- **The game's own notice** tells you: "*Rimed Needle* has been **DRAGONFORGED**! (2/3)" with the item's icon
+  (items of your pawn are marked "(your pawn)").
 - **The dragonforge mark** on the item's card shows the level by its colour: **teal** at level 1, **orange** at level
   2, **magenta** at level 3. The three upgrade slots before it stay empty.
 - Blacksmiths and the Dragonforged still can't upgrade spoils: only dragons forge them.
@@ -58,10 +61,11 @@ puts it back right after. When you load a save, the mod puts back the dragonforg
 - **Online stays clean:** the game uploads your main pawn together with a snapshot of your Arisen's equipment
   (upgrade levels and stats). While the game builds that upload, the mod takes every dragonforge off and puts it back
   right after, so only plain items go online; the menu shows how many uploads were built and confirms none contained
-  a dragonforge. A forged item handed to a pawn also counts as plain while the pawn has it; give it back and its
+  a dragonforge. Your main pawn keeps forged items in play. **Hired pawns** (other players' pawns) never carry a
+  modded dragonforge: a forged item you give one is a normal item while it has it; if the item comes back to you, its
   dragonforge level returns.
 
-Current version: **1.2.1**. Download it from [Releases](../../releases).
+Current version: **1.3**. Download it from [Releases](../../releases).
 
 ## Requirements
 
@@ -93,7 +97,7 @@ With the game closed, delete `reframework/autorun/DLCDragonforge.lua` (and `refr
 
 ## Known limits
 
-- Single-player: only your own character's equipped items are forged.
+- Only your character's and your main pawn's equipped items are forged; hired pawns' gear never.
 - Kills count when you or a pawn land the killing blow; a dragon that dies without an attacker counts when it is
   within 60 m of you.
 

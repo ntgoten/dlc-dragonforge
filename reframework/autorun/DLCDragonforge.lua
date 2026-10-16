@@ -11,7 +11,7 @@
 -- reframework/data/DLCDragonforge.json, taken off the items while the game writes a save and put back right after.
 -- Without the mod your items are plain DLC items again. Uninstall with the game closed.
 -- Menu: REFramework (Insert) > Script Generated UI > DLC Dragonforge
-local VERSION = "1.2.1"
+local VERSION = "1.3"
 local DATA = "DLCDragonforge.json"
 local ENH_DRAGON, ENH_UNLIMIT = 3, 4
 
@@ -587,6 +587,7 @@ local function forged_state(level) local t = level - 1; return { 4, t, t, t } en
 -- forge level of an item's upgrade state: 0 = not forged, else 1..3 (old "Dragon" steps count as 3)
 local function level_of(e) if e[1] ~= 4 then return 0 end return math.min(e[2], 2) + 1 end
 local PLAYER = "ch000000_00"
+local MAIN_PAWN = "ch100000_00"
 
 local CHARA = {}
 pcall(function()
@@ -651,6 +652,7 @@ end
 -- db.slots[slot] = the list as it was when that save slot was written; db.live = the current list (for script resets)
 ------------------------------------------------------------------------
 local cur, curSlot = {}, nil
+local pawnForgeTest = false        -- debug test switch: forged items stay forged on pawns (not saved)
 local function copy(t) local o = {}; for k, v in pairs(t) do o[k] = type(v) == "table" and copy(v) or v end; return o end
 local function remember_live() db.live = { slot = curSlot, items = copy(cur) }; save_db() end
 
@@ -686,7 +688,8 @@ local function apply_all()
     for sid, r in pairs(cur) do
         local it = by[sid]
         if it and it.item == r.item then
-            local onPawn = it.chara:sub(1, 3) == "ch1"
+            -- hired pawns (other players' pawns) never carry a modded dragonforge; your main pawn does
+            local onPawn = it.chara:sub(1, 3) == "ch1" and it.chara ~= MAIN_PAWN and not pawnForgeTest
             local e = read_enh(it.md)
             if e[1] ~= 4 then r.orig = r.orig or e end
             local want = onPawn and (r.orig or { 0, 0, 0, 0 }) or forged_state(r.level or 3)
@@ -909,7 +912,10 @@ end
 hook_online("app.OnlinePawnDataFormatter", function(n)
     return n:find("^updatePlaydataFrom") or n:find("^getEquipSnapshot") or n == "makeToUploadValidationWork"
 end)
-hook_online("app.PawnServerController", function(n) return n == "registerSupportPawnUploadData" end)
+hook_online("app.PawnServerController", function(n)
+    return n == "registerSupportPawnUploadData" or n == "registerSupportPawnDismissal" or n == "registerSupportPawnLeaveParty"
+        or n == "registerSupportPawnLost"
+end)
 
 local tick, firstLook, nextGuard = 0, true, 0
 re.on_frame(function()
@@ -1053,14 +1059,14 @@ local function on_dragon_killed(id)
     local chances, name = dragon_chance(id)
     local results = {}
     for _, it in ipairs(all_items()) do
-        if it.chara == PLAYER and it.equipped and FORGE[it.item] then
+        if (it.chara == PLAYER or it.chara == MAIN_PAWN) and it.equipped and FORGE[it.item] then
             local r = cur[tostring(it.sid)]
             local level = r and (r.level or 3) or 0
             if level < 3 then
                 local chance = chances[level + 1] or 0
                 if math.random(100) <= chance then
                     local new = raise(it)
-                    notify_forged(it.item, FORGE[it.item][2], new)
+                    notify_forged(it.item, FORGE[it.item][2] .. (it.chara == MAIN_PAWN and " (your pawn)" or ""), new)
                     results[#results + 1] = string.format("%s -> %d/3 (%d%%)", FORGE[it.item][2], new, chance)
                 else
                     results[#results + 1] = string.format("%s stays %d/3 (%d%%)", FORGE[it.item][2], level, chance)
@@ -1256,7 +1262,7 @@ re.on_draw_ui(function()
     local any = false
     for sid, r in pairs(cur) do
         any = true
-        imgui.text(string.format("  %s  (%d/3)%s", tostring(r.name), r.level or 3, r.onPawn and "  - on a pawn: inactive until it's back with you" or ""))
+        imgui.text(string.format("  %s  (%d/3)%s", tostring(r.name), r.level or 3, r.onPawn and "  - on a hired pawn: a normal item while there" or ""))
         imgui.same_line()
         if imgui.button("Undo##" .. sid) then unforge(sid) end
     end

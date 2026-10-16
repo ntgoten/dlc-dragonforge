@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3
+- Your main pawn keeps dragonforged items, and dragon kills now also roll your main pawn's equipped DLC spoils (each
+  item on its own, same chances). Her notices are marked "(your pawn)".
+- Hired pawns never carry a modded dragonforge: a forged item you give one is a normal item while it has it (its
+  level returns if the item comes back). The online guard also covers the game's hired-pawn equipment reports.
+
 ## 1.2.1
 - **Online fix:** the game uploads a snapshot of your Arisen's equipment (with upgrade levels and stats) together
   with your main pawn. Earlier versions only kept the dragonforge out of the save file and off pawn items, so your own

@@ -45,7 +45,8 @@ chance to gain a **dragonforge level**, up to 3, like dragonforging in Dragon's 
   (items of your pawn are marked "(your pawn)").
 - **The dragonforge mark** on the item's card shows the level by its colour: **teal** at level 1, **orange** at level
   2, **magenta** at level 3. The three upgrade slots before it stay empty.
-- Blacksmiths and the Dragonforged still can't upgrade spoils: only dragons forge them.
+- Blacksmiths and the Dragonforged can't upgrade spoils, and spoils don't appear on their upgrade lists: only
+  dragons forge them.
 
 ## Your save file stays clean
 
@@ -65,7 +66,7 @@ puts it back right after. When you load a save, the mod puts back the dragonforg
   modded dragonforge: a forged item you give one is a normal item while it has it; if the item comes back to you, its
   dragonforge level returns.
 
-Current version: **1.3**. Download it from [Releases](../../releases).
+Current version: **1.3.1**. Download it from [Releases](../../releases).
 
 ## Requirements
 

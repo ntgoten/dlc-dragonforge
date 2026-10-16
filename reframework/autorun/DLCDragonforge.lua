@@ -11,7 +11,7 @@
 -- reframework/data/DLCDragonforge.json, taken off the items while the game writes a save and put back right after.
 -- Without the mod your items are plain DLC items again. Uninstall with the game closed.
 -- Menu: REFramework (Insert) > Script Generated UI > DLC Dragonforge
-local VERSION = "1.3"
+local VERSION = "1.3.1"
 local DATA = "DLCDragonforge.json"
 local ENH_DRAGON, ENH_UNLIMIT = 3, 4
 
@@ -557,6 +557,34 @@ for _, m in ipairs({ "startEnhancementNode", "updateEnhancementNode", "startDrag
         sdk.hook(sdk.find_type_definition("app.TalkEventPlayer"):get_method(m), function() smithSeen = os.clock() end,
             function(r) return r end)
     end)
+end
+local SMITH_T = sdk.find_type_definition("app.ui041101_00")
+if SMITH_T then
+    for _, m in ipairs(SMITH_T:get_methods()) do
+        local name = m:get_name()
+        if name == "update" or name == "updateFlow" or name == "makeItemList" or name:find("^setupItemSlot")
+            or name == "selectItemSlot" or name == "skipCategoryItemSlot" or name == "updateItemInfoDisp"
+            or name:find("^isItemSlotDecideEnable") then
+            local guard = name == "isItemSlotDecideEnable" and m:get_num_params() == 1
+            local stack = {}
+            pcall(sdk.hook, m, function(args)
+                smithSeen = os.clock()
+                if not guard then return end
+                local block = false
+                pcall(function()
+                    local vt = sdk.to_valuetype(args[3], "app.ItemDefine.StorageData")
+                    block = FORGE[vt:get_field("_ItemId")] ~= nil
+                end)
+                stack[#stack + 1] = block
+            end, function(r)
+                smithSeen = os.clock()
+                if guard and table.remove(stack) then
+                    return sdk.to_ptr(0)
+                end
+                return r
+            end)
+        end
+    end
 end
 -- item ids whose card is being built right now for an unforged copy (no upgrade rings for those)
 local uiUnforged = {}

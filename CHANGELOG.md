@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.1
+- **Fix:** blacksmiths (and the Dragonforged) listed DLC spoils on their Equipment Enhancement screen as if they could
+  be upgraded (0 G, no materials, no stat change). The spoils no longer appear there, and confirming an upgrade on a
+  spoil is refused, so no smith upgrade can get onto a spoil and into your save file.
+
 ## 1.3
 - Your main pawn keeps dragonforged items, and dragon kills now also roll your main pawn's equipped DLC spoils (each
   item on its own, same chances). Her notices are marked "(your pawn)".

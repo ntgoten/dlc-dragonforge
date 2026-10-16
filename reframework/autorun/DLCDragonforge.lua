@@ -778,7 +778,7 @@ end)
 
 ------------------------------------------------------------------------
 -- in-game notice: the game's own notice log (app.ui023301) shows an equipment notice for the forged item (its icon)
--- and our text replaces the game's: "<item> has been DRAGONFORGED!". Technique as in QuestCore by Aurora: let the
+-- and our text replaces the game's: "<item> has been DRAGONFORGED!". Technique as in QuestCore by SonicaKP: let the
 -- game build its UI element, then rewrite the element's text.
 ------------------------------------------------------------------------
 local NOTICE_EQUIP = 17                -- app.ui023301.NoticeEnum.EquipStatusChange

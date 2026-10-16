@@ -73,7 +73,7 @@ With the game closed, delete `reframework/autorun/DLCDragonforge.lua` (and `refr
 
 - **Capcom** for Dragon's Dogma 2. The upgrade tables, marks and notices used are the game's own.
 - **praydog** for [REFramework](https://github.com/praydog/REFramework).
-- **Aurora** for [QuestCore](https://www.nexusmods.com/dragonsdogma2/mods/1662): the idea of letting the game build its
+- **SonicaKP** for [QuestCore](https://www.nexusmods.com/dragonsdogma2/mods/1662): the idea of letting the game build its
   own notice and rewriting its text came from there.
 - Built with AI assistance: [Claude Code](https://claude.com/claude-code) and the
   [universal-modder](https://github.com/rehan-remade/universal-modder) toolkit by rehan-remade.

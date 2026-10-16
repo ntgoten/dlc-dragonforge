@@ -483,9 +483,10 @@ local FORGE = {
 }
 
 local db = json.load_file(DATA) or {}
-if db.version ~= VERSION then      -- first start of 1.0: forget everything from the test builds
-    db = { version = VERSION }
+if db.version == nil then          -- data from the test builds (before 1.0): start clean; later versions keep it
+    db = {}
 end
+db.version = VERSION
 db.slots = db.slots or {}
 db.log = db.log or {}
 local function save_db() json.dump_file(DATA, db) end
@@ -1015,18 +1016,6 @@ re.on_draw_ui(function()
         if imgui.button("Undo##" .. sid) then unforge(sid) end
     end
     if not any then imgui.text("  (none yet - slay a dragon with DLC spoils equipped)") end
-    if imgui.tree_node("Debug") then
-        if imgui.button("Dragonforge a random equipped DLC spoil (like a dragon kill)") then
-            local ok, e = pcall(forge_random, "debug")
-            if not ok then status = "error: " .. tostring(e) end
-        end
-        if imgui.button("Undo all dragonforges in this save") then
-            local n = 0
-            for sid, _ in pairs(copy(cur)) do unforge(sid); n = n + 1 end
-            status = string.format("undid %d dragonforge(s)", n)
-        end
-        imgui.tree_pop()
-    end
     if imgui.tree_node("Log") then
         for i = #db.log, 1, -1 do imgui.text(db.log[i]) end
         imgui.tree_pop()

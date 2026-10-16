@@ -11,10 +11,22 @@ dragonforged, like in Dragon's Dogma (2012).
 - **What gets forged:** one random equipped, not yet dragonforged DLC spoil of your own character: weapon, shield,
   helmet, body or leg armour. Cloaks and rings can't be upgraded in the base game either, so they're left out.
   Your pawns' gear is not touched.
-- **What it does to the item:** it becomes a real dragonforged item: upgrade level 4 with three Dragon steps, the
-  dragonforge mark on its card and the higher stats. The bonuses are scaled from the game's own upgrade tables of the
-  DLC weapons and armour that *can* be upgraded, by weapon type and armour slot. For example, Rimed Needle goes
-  from 940 to about 1900 Strength (measured in game), plus extra stagger and knockdown power.
+- **What it does to the item:** it becomes a real dragonforged item with the dragonforge mark on its card. The game
+  only allows the dragonforge level on top of three smith upgrade steps, so the mod fills those in **without any
+  bonus**: the item only gets what dragonforging itself adds. That bonus is scaled from the game's own tables for the
+  DLC weapons and armour that *can* be upgraded, by weapon type and armour slot:
+
+  | Type | Dragonforge bonus |
+  |---|---|
+  | Sword / Greatsword / Daggers / Bow | Strength +36% / +32% / +43% / +39% |
+  | Magick bow | Magick +30% |
+  | Staff / Archistaff | Magick +30% (Strength +73% / +91% on a small base) |
+  | Duospear | Strength +34%, Magick +34% |
+  | Censer | Magick +35% (Strength +60%) |
+  | Shield | Strength +59%, more guard against stagger and knockdown |
+  | Helmet / Body / Legs | Defence +21% / +27% / +64%, Magick Defence +23% / +43% / +75% |
+
+  For example, Rimed Needle goes from 940 to about 1280 Strength.
 - **The game's own notice** tells you: "*Rimed Needle* has been **DRAGONFORGED**!" with the item's icon.
 - Base-game gear and the DLC items that can already be upgraded are not changed. Blacksmiths still can't upgrade
   spoils: only dragons forge them. A dragonforged spoil's card shows only the dragonforge mark (the three upgrade
@@ -32,7 +44,7 @@ puts it back right after. When you load a save, the mod puts back the dragonforg
 - **Uninstalling:** with the mod removed, your DLC items are plain DLC items again. Remove it **with the game closed**.
 - On every load the menu shows a "save file check" that confirms no DLC spoil in the save carries an upgrade.
 
-Current version: **1.0**. Download it from [Releases](../../releases).
+Current version: **1.1**. Download it from [Releases](../../releases).
 
 ## Requirements
 

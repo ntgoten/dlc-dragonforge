@@ -504,7 +504,9 @@ local status = "load a save"
 local TD = { w = sdk.find_type_definition("app.WeaponEnhanceParam"), a = sdk.find_type_definition("app.ArmorEnhanceParam") }
 local DICT = { w = "_WeaponEnhanceDict", a = "_ArmorEnhanceDict" }
 local ready = { w = 0, a = 0 }
-local NO_BONUS = {}
+-- the smith steps underneath: no bonus, weight rate 100% (neutral). The dragonforge level's own entry has weight
+-- rate 50%: the game computes (base weight + step weights) x 50%, so a forged spoil weighs half, as in the base game.
+local NO_BONUS = { _WeightRate = 100 }
 local function make_param(kind, id, typ, no, fields)
     local p = sdk.create_instance(TD[kind]:get_full_name()):add_ref()
     p:set_field("_ItemId", id); p:set_field("_Type", typ); p:set_field("_EnhanceNo", no)

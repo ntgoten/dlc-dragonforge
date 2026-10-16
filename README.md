@@ -26,7 +26,8 @@ dragonforged, like in Dragon's Dogma (2012).
   | Shield | Strength +59%, more guard against stagger and knockdown |
   | Helmet / Body / Legs | Defence +21% / +27% / +64%, Magick Defence +23% / +43% / +75% |
 
-  For example, Rimed Needle goes from 940 to about 1280 Strength.
+  The item also becomes **half as heavy**, like dragonforging in the base game. For example, Rimed Needle goes from
+  940 to about 1280 Strength and from 2.5 to 1.25 weight.
 - **The game's own notice** tells you: "*Rimed Needle* has been **DRAGONFORGED**!" with the item's icon.
 - Base-game gear and the DLC items that can already be upgraded are not changed. Blacksmiths still can't upgrade
   spoils: only dragons forge them. A dragonforged spoil's card shows only the dragonforge mark (the three upgrade

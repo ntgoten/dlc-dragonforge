@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.1
+- **Online fix:** the game uploads a snapshot of your Arisen's equipment (with upgrade levels and stats) together
+  with your main pawn. Earlier versions only kept the dragonforge out of the save file and off pawn items, so your own
+  forged items could appear in that snapshot. Now every dragonforge is taken off while the upload is built and put
+  back right after; checked in game: the uploaded data of a forged item is the same as an unforged one.
+- **Save fix:** one save can write several save files (e.g. three slots at once). 1.2 could put the dragonforge back
+  between them, so an extra save file could contain it. Now the whole save is guarded and the forges return only
+  when it has finished.
+- The menu shows an online check ("built N times from plain items, 0 leaks") next to the save file check.
+
 ## 1.2
 - Three dragonforge levels like the first game: each adds a third of the bonus; the 3rd also halves the weight.
 - Chances like the first game: every equipped spoil rolls on each dragon kill, by dragon type and the item's level

@@ -55,11 +55,13 @@ puts it back right after. When you load a save, the mod puts back the dragonforg
 - Different characters never mix: each save file has its own list.
 - **Uninstalling:** with the mod removed, your DLC items are plain DLC items again. Remove it **with the game closed**.
 - On every load the menu shows a "save file check" that confirms no DLC spoil in the save carries an upgrade.
-- **Your pawn stays clean online:** the game uploads your main pawn's equipment, so a dragonforge only counts while
-  the item is with you or in your storage box. Hand a forged item to a pawn and it is a plain item there; give it
-  back and its dragonforge level returns.
+- **Online stays clean:** the game uploads your main pawn together with a snapshot of your Arisen's equipment
+  (upgrade levels and stats). While the game builds that upload, the mod takes every dragonforge off and puts it back
+  right after, so only plain items go online; the menu shows how many uploads were built and confirms none contained
+  a dragonforge. A forged item handed to a pawn also counts as plain while the pawn has it; give it back and its
+  dragonforge level returns.
 
-Current version: **1.2**. Download it from [Releases](../../releases).
+Current version: **1.2.1**. Download it from [Releases](../../releases).
 
 ## Requirements
 
@@ -82,7 +84,7 @@ No other mods are needed. No game files are included or replaced.
 Press **Insert** → *Script Generated UI* → **DLC Dragonforge**:
 
 - which DLC items are dragonforged in the loaded save and at which level (with an Undo button each)
-- the save file check
+- the save file check and the online check
 - a short log of dragon kills and forges
 
 ## Uninstall

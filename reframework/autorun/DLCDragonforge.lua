@@ -11,7 +11,7 @@
 -- reframework/data/DLCDragonforge.json, taken off the items while the game writes a save and put back right after.
 -- Without the mod your items are plain DLC items again. Uninstall with the game closed.
 -- Menu: REFramework (Insert) > Script Generated UI > DLC Dragonforge
-local VERSION = "1.2"
+local VERSION = "1.2.1"
 local DATA = "DLCDragonforge.json"
 local ENH_DRAGON, ENH_UNLIMIT = 3, 4
 
@@ -751,31 +751,47 @@ local function lower(sid)
 end
 
 ------------------------------------------------------------------------
--- save / load
+-- save / load. A save goes through several functions (SaveDataManager.save -> SaveDataManager.saveGameSaveData ->
+-- ItemManager.saveGameSaveData, ItemManager.saveGameSaveDataTarget for further save files, fillStorageSaveData,
+-- makeLoopSaveData). The forges come off when the first of them starts and go back on only when the outermost one has
+-- finished; nothing else may put them back in between (savingNow). Every slot the game asked to save gets the list.
 ------------------------------------------------------------------------
-local pendingSave, applyAt, checkPending = nil, nil, false
--- right before the game builds pawn data for upload, make sure no pawn holds a forged item
+local pendingSlots, applyAt, checkPending = {}, nil, false
+local savingNow, saveDepth, saveKept = false, 0, nil
+local function save_pre()
+    if saveDepth == 0 then
+        savingNow = true
+        local ok, kept = pcall(strip_all)
+        saveKept = ok and kept or copy(cur)
+    end
+    saveDepth = saveDepth + 1
+end
+local function save_post()
+    saveDepth = math.max(0, saveDepth - 1)
+    if saveDepth > 0 then return end
+    local slots = {}
+    for slot in pairs(pendingSlots) do db.slots[tostring(slot)] = copy(saveKept or {}); slots[#slots + 1] = tostring(slot) end
+    pendingSlots = {}
+    saveKept = nil
+    savingNow = false
+    if #slots > 0 then save_db() end
+    pcall(apply_all)
+end
 pcall(function()
-    sdk.hook(sdk.find_type_definition("app.PawnServerController"):get_method("registerSupportPawnUploadData"),
-        function() pcall(apply_all) end, function(r) return r end)
-end)
-pcall(function()
-    sdk.hook(sdk.find_type_definition("app.SaveDataManager"):get_method("requestSave"), function(args)
-        local slot = sdk.to_int64(args[3]) & 0xFFFFFFFF
-        if slot < 0x80000000 then pendingSave = slot end
-    end, function(r) return r end)
+    local sm_t = sdk.find_type_definition("app.SaveDataManager")
+    for _, m in ipairs({ "requestSave", "requestSaveSlot", "requestSaveManual" }) do
+        pcall(sdk.hook, sm_t:get_method(m), function(args)
+            local slot = sdk.to_int64(args[3]) & 0xFFFFFFFF
+            if slot < 0x80000000 then pendingSlots[slot] = true end
+        end, function(r) return r end)
+    end
+    for _, m in ipairs({ "save", "saveGameSaveData" }) do
+        pcall(sdk.hook, sm_t:get_method(m), function() save_pre() end, function(r) save_post(); return r end)
+    end
     local im_t = sdk.find_type_definition("app.ItemManager")
-    sdk.hook(im_t:get_method("saveGameSaveData"), function()
-        local kept = strip_all()
-        if pendingSave then
-            db.slots[tostring(pendingSave)] = kept       -- only items that still exist
-            pendingSave = nil
-            save_db()
-        end
-    end, function(r)
-        apply_all()
-        return r
-    end)
+    for _, m in ipairs({ "saveGameSaveData", "saveGameSaveDataTarget", "fillStorageSaveData", "makeLoopSaveData" }) do
+        pcall(sdk.hook, im_t:get_method(m), function() save_pre() end, function(r) save_post(); return r end)
+    end
     sdk.hook(im_t:get_method("loadGameSaveData"), nil, function(r)
         local sm = sdk.get_managed_singleton("app.SaveDataManager")
         local ok, s = pcall(function() return sm:call("getLoadingGameSlotId") end)
@@ -792,11 +808,115 @@ end)
 -- matches the save file; the next script instance puts them back from db.live
 pcall(re.on_script_reset, function() pcall(strip_all) end)
 
+
+------------------------------------------------------------------------
+-- online guard: the game uploads your main pawn AND a snapshot of your Arisen (equipment with upgrade level and
+-- stats) from memory, built by app.OnlinePawnDataFormatter (updatePlaydataFrom..., getEquipSnapshot...,
+-- makeToUploadValidationWork) and app.PawnServerController.registerSupportPawnUploadData. (The formatter's
+-- SetContextWriterOnline... methods go the other way - downloaded pawn data into the game - and are not touched.) While any of those run,
+-- every dragonforge is taken off (you, pawns, storage box) and put back right after, so the online data is built from
+-- plain items. Every equipment list they build is checked afterwards: a DLC spoil with an upgrade in it counts as a leak.
+------------------------------------------------------------------------
+db.online = db.online or { builds = 0, leaks = 0 }
+local onlineDepth = 0
+local function cur_has_item(id) for _, r in pairs(cur) do if r.item == id then return true end end return false end
+local function online_pre()
+    if onlineDepth == 0 then pcall(strip_all) end
+    onlineDepth = onlineDepth + 1
+end
+local function online_post()
+    onlineDepth = math.max(0, onlineDepth - 1)
+    -- never put forges back while a save is being written (saving triggers these builders too)
+    -- (and not before the load check has read the save file's state)
+    if onlineDepth == 0 and not savingNow and not checkPending then pcall(apply_all) end
+end
+-- check a List<ApiCurrenatEquipInfo>: returns DLC spoils with an upgrade, DLC spoils seen
+local function leaks_in(list)
+    local n, seen = 0, 0
+    list_each(list, function(e)
+        local info = e:get_field("ItemInfo")
+        if not info then return end
+        local raw = tostring(info:get_field("ItemId"))
+        if not db.online.idSample then db.online.idSample = raw end
+        local id = tonumber(raw) or tonumber(raw:match("(%d+)%s*$") or "") or tonumber(raw:match("(%d+)") or "")
+        -- a smith upgrade shows as EnhanceNum > 0 and named step types. (UnlimitEnhanceNum is 4 for every appraised
+        -- spoil in the unmodded game, so it says nothing.)
+        local t0 = tostring(info:get_field("EnhanceType0") or "")
+        local up = (info:get_field("EnhanceNum") or 0) + ((t0 ~= "" and t0 ~= "None" and t0 ~= "nil") and 1 or 0)
+        if id and FORGE[id] then
+            seen = seen + 1
+            if up > 0 then n = n + 1 end
+            db.online.samples = db.online.samples or {}
+            if #db.online.samples < 16 then
+                local function g(f) local ok, v = pcall(info.get_field, info, f); return ok and tostring(v) or "?" end
+                table.insert(db.online.samples, string.format("%s %s: EnhanceNum %s, Unlimit %s, types %s/%s/%s, base %s, appraised %s, forged here %s",
+                    raw, FORGE[id][2], g("EnhanceNum"), g("UnlimitEnhanceNum"), g("EnhanceType0"), g("EnhanceType1"), g("EnhanceType2"),
+                    g("EnhanceTypeBaseName"), g("IsAppraised"), tostring(cur_has_item and cur_has_item(id) or "?")))
+            end
+        end
+    end)
+    return n, seen
+end
+local function owner_list(playdata)
+    for _, f in ipairs(playdata:get_type_definition():get_fields()) do
+        if f:get_type():get_full_name() == "app.PawnApiUserdata.OwnerData" then
+            local od = playdata:get_field(f:get_name())
+            local eq = od and od:get_field("Equips")
+            return eq and eq:get_field("EquipInfo")
+        end
+    end
+end
+local function note_build(fn, leaks, seen)
+    db.online.builds = (db.online.builds or 0) + 1
+    db.online.last = os.date("%Y-%m-%d %H:%M:%S") .. " " .. fn
+    db.online.byFn = db.online.byFn or {}
+    local c = db.online.byFn[fn] or { calls = 0, checkedSpoils = 0 }
+    c.calls = c.calls + 1
+    c.checkedSpoils = c.checkedSpoils + (seen or 0)
+    db.online.byFn[fn] = c
+    if leaks and leaks > 0 then
+        db.online.leaks = (db.online.leaks or 0) + leaks
+        log(string.format("online data (%s): %d DLC spoil(s) with an upgrade got into it", fn, leaks))
+    end
+    save_db()
+end
+local function hook_online(tdname, match)
+    local td = sdk.find_type_definition(tdname)
+    if not td then return end
+    for _, m in ipairs(td:get_methods()) do
+        local name = m:get_name()
+        if match(name) then
+            local stack = {}
+            pcall(sdk.hook, m, function(args)
+                online_pre()
+                local pd
+                if name == "updatePlaydataFromOwnerData" then pcall(function() pd = sdk.to_managed_object(args[3]) end) end
+                stack[#stack + 1] = { pd = pd }
+            end, function(r)
+                local st = table.remove(stack) or {}
+                local leaks, seen = st.leaks, st.seen
+                pcall(function()
+                    if name == "getEquipSnapshotMyPawn" then leaks, seen = leaks_in(sdk.to_managed_object(r))
+                    elseif st.pd then leaks, seen = leaks_in(owner_list(st.pd)) end
+                end)
+                online_post()
+                pcall(note_build, name, leaks, seen)
+                return r
+            end)
+        end
+    end
+end
+hook_online("app.OnlinePawnDataFormatter", function(n)
+    return n:find("^updatePlaydataFrom") or n:find("^getEquipSnapshot") or n == "makeToUploadValidationWork"
+end)
+hook_online("app.PawnServerController", function(n) return n == "registerSupportPawnUploadData" end)
+
 local tick, firstLook, nextGuard = 0, true, 0
 re.on_frame(function()
     tick = tick + 1
     -- items move between you, your pawns and the storage box at any time: re-check every 2 s
-    if next(cur) and os.clock() > nextGuard then nextGuard = os.clock() + 2; pcall(apply_all) end
+    -- (not before the load check has read the save file's state: it runs at applyAt)
+    if next(cur) and not savingNow and not applyAt and not checkPending and os.clock() > nextGuard then nextGuard = os.clock() + 2; pcall(apply_all) end
     if ready.w + ready.a == 0 and tick % 60 == 0 then pcall(inject_tables) end
     -- started while a save is already loaded (scripts reset): continue with the live list of that slot
     if firstLook and tick > 120 then
@@ -1129,6 +1249,8 @@ re.on_draw_ui(function()
     if not imgui.tree_node("DLC Dragonforge") then return end
     imgui.text("v" .. VERSION .. "  -  " .. status)
     imgui.text(saveCheck)
+    imgui.text(string.format("online data: built %d time(s) from plain items, %d leak(s)%s", db.online.builds or 0,
+        db.online.leaks or 0, db.online.last and ("  - last " .. db.online.last) or ""))
     if ready.w + ready.a == 0 then imgui.text("waiting for the game's upgrade tables...") end
     imgui.text("Dragonforged in this save:")
     local any = false

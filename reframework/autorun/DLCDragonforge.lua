@@ -848,19 +848,24 @@ local function near_player(chara, dist)
     return (pos - pp):length() <= dist
 end
 
-local function on_dragon_killed(name)
-    if os.clock() - lastDragonKill < 5 then return end          -- one kill, several notifications
-    lastDragonKill = os.clock()
+-- dragonforge one random equipped, not yet forged DLC spoil of yours; returns its name or nil
+local function forge_random(reason)
     local pick = {}
     for _, it in ipairs(all_items()) do
         if it.chara == PLAYER and it.equipped and FORGE[it.item] and not cur[tostring(it.sid)] then pick[#pick + 1] = it end
     end
-    if #pick == 0 then log(name .. " slain - no equipped DLC spoil left to dragonforge"); return end
+    if #pick == 0 then log(reason .. " - no equipped DLC spoil left to dragonforge"); status = "no equipped DLC spoil left to dragonforge"; return nil end
     local it = pick[math.random(#pick)]
     forge(it)
     notify_forged(it.item, FORGE[it.item][2])
     status = FORGE[it.item][2] .. " has been dragonforged"
-    log(name .. " slain - " .. FORGE[it.item][2] .. " dragonforged")
+    log(reason .. " - " .. FORGE[it.item][2] .. " dragonforged")
+    return FORGE[it.item][2]
+end
+local function on_dragon_killed(name)
+    if os.clock() - lastDragonKill < 5 then return end          -- one kill, several notifications
+    lastDragonKill = os.clock()
+    forge_random(name .. " slain")
 end
 
 pcall(function()
@@ -1008,6 +1013,18 @@ re.on_draw_ui(function()
         if imgui.button("Undo##" .. sid) then unforge(sid) end
     end
     if not any then imgui.text("  (none yet - slay a dragon with DLC spoils equipped)") end
+    if imgui.tree_node("Debug") then
+        if imgui.button("Dragonforge a random equipped DLC spoil (like a dragon kill)") then
+            local ok, e = pcall(forge_random, "debug")
+            if not ok then status = "error: " .. tostring(e) end
+        end
+        if imgui.button("Undo all dragonforges in this save") then
+            local n = 0
+            for sid, _ in pairs(copy(cur)) do unforge(sid); n = n + 1 end
+            status = string.format("undid %d dragonforge(s)", n)
+        end
+        imgui.tree_pop()
+    end
     if imgui.tree_node("Log") then
         for i = #db.log, 1, -1 do imgui.text(db.log[i]) end
         imgui.tree_pop()

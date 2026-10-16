@@ -68,6 +68,7 @@ Press **Insert** → *Script Generated UI* → **DLC Dragonforge**:
 
 - which DLC items are dragonforged in the loaded save (with an Undo button each)
 - the save file check
+- **Debug**: dragonforge a random equipped DLC spoil without a dragon, or undo all dragonforges in the loaded save
 - a short log of dragon kills and forges
 
 ## Uninstall
